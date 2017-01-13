@@ -65,7 +65,39 @@ with(top10, barplot(height = health_affected, names.arg = EVTYPE, las = 3))
 #### 4.2 Events have the greatest economic consequences
 
 ```{R}
+# PROPDMG
+df1[df1$PROPDMGEXP=="H",] <- df1[df1$PROPDMGEXP=="H",] %>%
+    mutate(PROPDMG = PROPDMG * 10^2)
 
+df1[df1$PROPDMGEXP=="K",] <- df1[df1$PROPDMGEXP=="K",] %>%
+    mutate(PROPDMG = PROPDMG * 10^3)
+
+df1[df1$PROPDMGEXP=="M",] <- df1[df1$PROPDMGEXP=="M",] %>%
+    mutate(PROPDMG = PROPDMG * 10^6)
+
+df1[df1$PROPDMGEXP=="B",] <- df1[df1$PROPDMGEXP=="B",] %>%
+    mutate(PROPDMG = PROPDMG * 10^9)
+
+#CROPDMG
+df1[df1$CROPDMGEXP=="H",] <- df1[df1$CROPDMGEXP=="H",] %>%
+    mutate(CROPDMG = CROPDMG * 10^2)
+
+df1[df1$CROPDMGEXP=="K",] <- df1[df1$CROPDMGEXP=="K",] %>%
+    mutate(CROPDMG = CROPDMG * 10^3)
+
+df1[df1$CROPDMGEXP=="M",] <- df1[df1$CROPDMGEXP=="M",] %>%
+    mutate(CROPDMG = CROPDMG * 10^6)
+
+df1[df1$CROPDMGEXP=="B",] <- df1[df1$CROPDMGEXP=="B",] %>%
+    mutate(CROPDMG = CROPDMG * 10^9)
+
+ds2 <- df1 %>%
+    group_by(EVTYPE) %>%
+    summarise(total_amt_dmg = sum(PROPDMG + CROPDMG)) %>%
+    arrange(desc(total_amt_dmg))
+
+top10 <- ds2[1:10,]
+with(top10, barplot(height = total_amt_dmg, names.arg = EVTYPE, las = 3))
 ```
 
 ## Summary
