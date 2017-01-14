@@ -2,7 +2,7 @@
 title: "Weather Data Anlysist"
 author: "Ridzuan Mohamad"
 date: "1/12/2017"
-output: html_document
+output: pdf_document
 ---
 
 ## Introduction
@@ -29,24 +29,54 @@ if(!file.exists(zip_filename)){
 
 ```{R}
 df0 <- read.csv(zip_filename, header=TRUE, sep=",")
+```
 
-# Print out dimension of raw data
-dim(df0)
+The raw data structure consist of `r dim(df0)[1]` row(s) and `r dim(df0)[2]` columns
 
+List of available columns
+```{R, echo=FALSE}
 # List out column names
 names(df0)
+```
 
-# Check first 5 rows of raw data
+Check first 5 rows of raw data
+```{R}
 head(df0)
 ```
 
 ### 3. Data Cleansing
+
+For this analysis only a few columns which are required to answer both questions. So, we create a subset from raw dataset which contains the meaningful variable for this research. The required column are:--
+
+No. | Column     | Description
+----|------------|-----------------------------------
+1.  | EVTYPE     | Type of event recorded
+2.  | FATALITIES | Number of fatalities reported
+3.  | INJURIES   | Number of people injured reported
+4.  | PROPDMG    | Property damage measurement
+5.  | PROPDMGEXP | The exponential for Property Damage
+6.  | CROPDMG    | Crop damage measurement
+7.  | CROPDMGEXP | The exponential for Crop Damage
 
 ```{R, message=FALSE, warning=FALSE}
 library(dplyr)
 
 df1 <- select(df0, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)
 ```
+
+Check first 5 rows from subset dataset
+```{R}
+head(df1)
+```
+
+In order to get the right value, we must change the property damage and crop damage to it's actual value. The exponential is describe as shown in the table below:--
+
+No. | EXP | Description
+----|-----|-----------------------
+1   | H   | Hundred (10^2)
+2   | K   | Thousand (10^3)
+3   | M   | Million (10^6)
+4   | B   | Billion (10^9)
 
 ### 4. Analysing Data
 
@@ -65,39 +95,23 @@ with(top10, barplot(height = health_affected, names.arg = EVTYPE, las = 3))
 #### 4.2 Events have the greatest economic consequences
 
 ```{R}
-# PROPDMG
-df1[df1$PROPDMGEXP=="H",] <- df1[df1$PROPDMGEXP=="H",] %>%
-    mutate(PROPDMG = PROPDMG * 10^2)
-
-df1[df1$PROPDMGEXP=="K",] <- df1[df1$PROPDMGEXP=="K",] %>%
-    mutate(PROPDMG = PROPDMG * 10^3)
-
-df1[df1$PROPDMGEXP=="M",] <- df1[df1$PROPDMGEXP=="M",] %>%
-    mutate(PROPDMG = PROPDMG * 10^6)
-
-df1[df1$PROPDMGEXP=="B",] <- df1[df1$PROPDMGEXP=="B",] %>%
-    mutate(PROPDMG = PROPDMG * 10^9)
-
-#CROPDMG
-df1[df1$CROPDMGEXP=="H",] <- df1[df1$CROPDMGEXP=="H",] %>%
-    mutate(CROPDMG = CROPDMG * 10^2)
-
-df1[df1$CROPDMGEXP=="K",] <- df1[df1$CROPDMGEXP=="K",] %>%
-    mutate(CROPDMG = CROPDMG * 10^3)
-
-df1[df1$CROPDMGEXP=="M",] <- df1[df1$CROPDMGEXP=="M",] %>%
-    mutate(CROPDMG = CROPDMG * 10^6)
-
-df1[df1$CROPDMGEXP=="B",] <- df1[df1$CROPDMGEXP=="B",] %>%
-    mutate(CROPDMG = CROPDMG * 10^9)
-
 ds2 <- df1 %>%
+    mutate(actual_propdmg = case_when(.$PROPDMGEXP == "H" ~ .$PROPDMG*10^2,
+                                      .$PROPDMGEXP == "K" ~ .$PROPDMG*10^3,
+                                      .$PROPDMGEXP == "M" ~ .$PROPDMG*10^6,
+                                      .$PROPDMGEXP == "B" ~ .$PROPDMG*10^9,
+                                      TRUE ~ .$PROPDMG)) %>%
+    mutate(actual_cropdmg = case_when(.$CROPDMGEXP == "H" ~ .$CROPDMG*10^2,
+                                      .$CROPDMGEXP == "K" ~ .$CROPDMG*10^3,
+                                      .$CROPDMGEXP == "M" ~ .$CROPDMG*10^6,
+                                      .$CROPDMGEXP == "B" ~ .$CROPDMG*10^9,
+                                      TRUE ~ .$CROPDMG)) %>%
     group_by(EVTYPE) %>%
-    summarise(total_amt_dmg = sum(PROPDMG + CROPDMG)) %>%
-    arrange(desc(total_amt_dmg))
+    summarise(total_actual_damage = sum(actual_propdmg + actual_cropdmg)) %>%
+    arrange(desc(total_actual_damage))
 
 top10 <- ds2[1:10,]
-with(top10, barplot(height = total_amt_dmg, names.arg = EVTYPE, las = 3))
+with(top10, barplot(height = total_actual_damage/10^3, names.arg = EVTYPE, las = 3))
 ```
 
 ## Summary
