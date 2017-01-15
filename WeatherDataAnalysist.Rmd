@@ -2,7 +2,7 @@
 title: "Weather Data Anlysist"
 author: "Ridzuan Mohamad"
 date: "1/12/2017"
-output: pdf_document
+output: html_document
 ---
 
 ## Introduction
@@ -111,7 +111,13 @@ ds2 <- df1 %>%
     arrange(desc(total_actual_damage))
 
 top10 <- ds2[1:10,]
-with(top10, barplot(height = total_actual_damage/10^3, names.arg = EVTYPE, las = 3))
+
+library(ggplot2)
+
+ggplot(data=top10, aes(EVTYPE, total_actual_damage/10^3, fill=EVTYPE)) +
+    geom_bar(stat="identity") +
+    guides(fill=FALSE) +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
 ```
 
 ## Summary
